@@ -7,10 +7,11 @@ export interface IBotContext extends Context {
 }
 
 interface SessionData extends TelegrafScenes.SceneSession<SceneSessionData> {
+  
 }
 
 interface SceneSessionData extends TelegrafScenes.SceneSessionData {
   state: {
-
+    
   };
 }

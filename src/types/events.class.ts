@@ -1,27 +1,30 @@
 import { IBotContext } from "../context/context.interface";
 
-export default class ModuleEvent {
-  constructor (public readonly type: string) {}
+export class ModuleEvent {
+  constructor(public readonly type: string, public readonly handler: (ctx: any) => void | Promise<void>) {}
 }
-
 export class CommandEvent extends ModuleEvent {
-  public readonly command: string;
-  public readonly handler: (ctx: IBotContext) => void | Promise<void>;
-
-  constructor(command: string, handler: (ctx: IBotContext) => void | Promise<void>) {
-    super("telegram");
-    this.command = command;
-    this.handler = handler;
+  constructor(public readonly name: string, handler: CommandEvent["handler"]) {
+    super("telegram", handler);
   }
 }
-
+export class ActionEvent extends ModuleEvent {
+  constructor(public readonly name: string, handler: ActionEvent["handler"]) {
+    super("telegram", handler);
+  }
+}
+export class HearsEvent extends ModuleEvent {
+  constructor(public readonly name: string, handler: HearsEvent["handler"]) {
+    super("telegram", handler);
+  }
+}
+export class TelegramEvent extends ModuleEvent {
+  constructor(public readonly name: string, handler: TelegramEvent["handler"]) {
+    super("telegram", handler);
+  }
+}
 export class SceneEvent extends ModuleEvent {
-  public readonly scene: string;
-  public readonly handler: (ctx: IBotContext) => void | Promise<void>;
-
-  constructor(scene: string, handler: (ctx: IBotContext) => void | Promise<void>) {
-    super("telegram");
-    this.scene = scene;
-    this.handler = handler;
+  constructor(public readonly name: string, handler: SceneEvent["handler"]) {
+    super("telegram", handler);
   }
 }

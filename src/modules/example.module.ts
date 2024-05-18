@@ -1,12 +1,11 @@
 // ./example.module.ts
-import { SceneEvent, CommandEvent } from "../types/events.class";
-import { ModuleBuilder, Module } from "../types/module.class"; // Import the ModuleBuilder class
+import ModuleBuilder, { Module } from '../types/module.class';
 
-export default new ModuleBuilder("example", (module: Module) => {
-  module.addEvent(
-    new CommandEvent("start", async (ctx) => {
-      await ctx.reply("Hello, world!");
-    })
-  );
+export default new ModuleBuilder('example', (module: Module) => {
+  module.bot.start(async (ctx) => {  
+    await ctx.reply('start')
+    module.logger.log(ctx.from.id)
+    throw new Error('test error')
+  })
   return module;
 });

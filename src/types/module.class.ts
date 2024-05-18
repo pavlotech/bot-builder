@@ -1,12 +1,12 @@
-// ./Module.ts
 import App from "../../index";
 import Logger from "./logger.class";
 import { PrismaClient } from "@prisma/client";
 import { ConfigService } from "../config/config.service";
+import { ModuleEvent } from "./events.class";
 import { IBotContext } from "../context/context.interface";
-import { CommandEvent, SceneEvent } from "./events.class";
+import { Scenes, Telegraf } from "telegraf";
 
-export class ModuleBuilder { // Exporting the class instead of an instance
+export default class ModuleBuilder {
   constructor(
     public readonly name: string,
     public readonly build: (module: Module) => Module | Promise<Module>
@@ -16,22 +16,18 @@ export class ModuleBuilder { // Exporting the class instead of an instance
 export class Module {
   public prisma: PrismaClient;
   public config: ConfigService;
-  public ctx!: IBotContext;
 
+  public addEvent(...event: ModuleEvent[]) { this.events.push(...event) }
+  public getEvents() { return this.events }
+  
   constructor(
     public app: App,
+    public bot: Telegraf<IBotContext>,
     public logger: Logger,
-    private events: (CommandEvent | SceneEvent)[]
+    private events: ModuleEvent[],
+    public scene?: Scenes.BaseScene<IBotContext>
   ) {
     this.prisma = new PrismaClient();
     this.config = new ConfigService();
-  }
-
-  public addEvent(...event: (CommandEvent | SceneEvent)[]) {
-    this.events.push(...event);
-  }
-
-  public getEvents(): (CommandEvent | SceneEvent)[] {
-    return this.events;
   }
 }

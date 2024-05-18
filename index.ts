@@ -1,65 +1,66 @@
 import { IBotContext } from './src/context/context.interface';
 import fs from "fs";
 import path from "path";
-import { Scenes, Telegraf } from "telegraf";
+import { Scenes, Telegraf, session } from "telegraf";
 import Logger from "./src/types/logger.class";
 import { ConfigService } from "./src/config/config.service";
-import { CommandEvent, SceneEvent } from './src/types/events.class';
-import { ModuleBuilder, Module } from './src/types/module.class';
+import ModuleBuilder, { Module } from './src/types/module.class';
+import { IConfigService } from './src/config/config.interface';
 
 export default class App {
   private logger: Logger;
-  private config: ConfigService;
   private bot: Telegraf<IBotContext>;
-  private modules: Module[];
-
-  constructor() {
-    this.logger = new Logger();
-    this.config = new ConfigService();
-    this.bot = new Telegraf(this.config.get('TOKEN'));
-    this.modules = [];
-
-    this.main();
-  }
 
   private async importModules(dir: string): Promise<ModuleBuilder[]> {
-    const files = await fs.promises.readdir(dir);
+    const files = (await fs.promises.readdir(dir)).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
     const modules: ModuleBuilder[] = [];
 
     for (const file of files) {
-      if (file.endsWith(".js")) { // Импортируем .js файлы напрямую (скомпилированный вывод)
-        const modulePath = path.join(dir, file);
-        try {
-          // Динамический импорт с использованием import() для лучшей обработки путей
-          const importedModule = await import(modulePath); 
-          if (importedModule.default instanceof ModuleBuilder) {
-            modules.push(importedModule.default);
-            this.logger.info(`module loaded: ${modulePath}`);
-          }
-        } catch (err) {
-          this.logger.error(`module import error ${modulePath}:`, err);
+      const modulePath = path.join(dir, file);
+      try {
+        const { default: importedModule } = await import(modulePath); 
+        if (importedModule instanceof ModuleBuilder) {
+          modules.push(importedModule);
+          this.logger.info(`module '${importedModule.name}' loaded from ${file}`);
         }
+      } catch (error) {
+        this.logger.error(`module import error ${file}:`, error);
       }
     }
-    this.logger.info(`loaded ${modules.length} modules from ${dir}`);
     return modules;
   }
-  async main() {
+  private async main() {
+    const scenes: Scenes.BaseScene<IBotContext>[] = []; // Правильный тип для массива сцен
     const moduleBuilders = await this.importModules(path.join(__dirname, 'src', 'modules'));
+    this.logger.log(JSON.stringify(moduleBuilders, null, 2));
+ 
     for (const moduleBuilder of moduleBuilders) {
-      const telegramModule = new Module(this, this.logger, []); 
-      await moduleBuilder.build(telegramModule); // Вызываем метод build у экземпляра moduleBuilder
-      this.modules.push(telegramModule);
+      const scene = new Scenes.BaseScene<IBotContext>(moduleBuilder.name);
+      const module = new Module(this, this.bot, this.logger, [], scene);
 
-      // Добавление обработчиков команд и сцен
-      for (const event of telegramModule.getEvents()) {
-        if (event instanceof CommandEvent) {
-          this.bot.command(event.command, event.handler);
-        }
-      }
+      await moduleBuilder.build(module);
+      scenes.push(scene); // Добавляем scene, а не module
     }
-    this.bot.launch()
-    this.logger.info('bot started')
+    const stage = new Scenes.Stage<IBotContext>(scenes, { ttl: 10 * 60 * 1000 });
+    this.bot.use(session()); // Middleware session должен идти до stage
+    this.bot.use(stage.middleware());
+
+    const launchOptions: Telegraf.LaunchOptions = {};
+    this.bot.launch(launchOptions, async () => {
+      this.logger.info('bot started successfully');
+    }).catch((error) => this.logger.error(error))
+  }
+
+  constructor(private readonly config: IConfigService) {
+    this.logger = new Logger({
+      logDirectory: 'logs',
+      saveIntervalHours: 1
+    });
+    this.config = new ConfigService();
+    this.bot = new Telegraf<IBotContext>(this.config.get('TOKEN'), {
+      handlerTimeout: 60 * 60 * 1000
+    });
+    this.main();
   }
 }
-new App();
+new App(new ConfigService());
