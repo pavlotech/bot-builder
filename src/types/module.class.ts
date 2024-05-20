@@ -1,10 +1,11 @@
 import App from "../../index";
 import Logger from "./logger.class";
-import { PrismaClient } from "@prisma/client";
-import { ConfigService } from "../config/config.service";
 import { ModuleEvent } from "./events.class";
 import { IBotContext } from "../context/context.interface";
 import { Scenes, Telegraf } from "telegraf";
+import { IConfigService } from "../config/config.interface";
+import { ModuleOptions } from "./interfaces/module.interface";
+import { Locale } from "../locale/locale.service";
 
 export default class ModuleBuilder {
   constructor(
@@ -14,20 +15,28 @@ export default class ModuleBuilder {
 }
 
 export class Module {
-  public prisma: PrismaClient;
-  public config: ConfigService;
+  public readonly config: IConfigService
+  public readonly logger: Logger
+  public readonly app: App
+  public readonly bot: Telegraf<IBotContext>
+  public readonly locale: Locale
+  public readonly scene?: Scenes.BaseScene<IBotContext>
 
-  public addEvent(...event: ModuleEvent[]) { this.events.push(...event) }
-  public getEvents() { return this.events }
-  
   constructor(
-    public app: App,
-    public bot: Telegraf<IBotContext>,
-    public logger: Logger,
-    private events: ModuleEvent[],
-    public scene?: Scenes.BaseScene<IBotContext>
+    private options: ModuleOptions
   ) {
-    this.prisma = new PrismaClient();
-    this.config = new ConfigService();
+    this.config = this.options.config;
+    this.logger = this.options.logger;
+    this.app = this.options.app;
+    this.bot = this.options.bot;
+    this.locale = new Locale();
+    this.scene = this.options.scene;
+  }
+  private events: ModuleEvent[] = []
+  public addEvent(...event: ModuleEvent[]) {
+    this.events.push(...event)
+  }
+  public getEvents() {
+    return this.events
   }
 }

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
+    "bing-translate-api": "^4.0.1",
     "circular-json": "^0.5.9",
     "dotenv": "^16.4.4",
     "telegraf": "^4.16.3"

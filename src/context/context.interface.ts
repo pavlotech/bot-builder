@@ -12,6 +12,6 @@ interface SessionData extends TelegrafScenes.SceneSession<SceneSessionData> {
 
 interface SceneSessionData extends TelegrafScenes.SceneSessionData {
   state: {
-    
+    lang: string;
   };
 }
