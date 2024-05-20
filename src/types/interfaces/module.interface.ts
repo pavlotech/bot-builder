@@ -1,3 +1,5 @@
+// module.interface.ts
+
 import { Scenes, Telegraf } from "telegraf";
 import { IBotContext } from "../../context/context.interface";
 import { IConfigService } from "../../config/config.interface";

@@ -1,3 +1,4 @@
+// locale.service.ts
 import path from 'path';
 import fs from "fs";
 import { LocaleData } from './locale.interface';

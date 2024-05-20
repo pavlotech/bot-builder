@@ -1,3 +1,4 @@
+// context.interface.ts
 import { Context, Scenes as TelegrafScenes } from "telegraf";
 import { SceneContext, SceneContextScene } from "telegraf/typings/scenes";
 

@@ -1,3 +1,4 @@
+// uk.ts
 export default {
   start: {
     reply: '*Привіт!*' 

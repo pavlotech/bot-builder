@@ -1,3 +1,4 @@
+// logger.interface.ts
 export interface LoggerOptions {
   logDirectory: string;
   saveIntervalHours?: number;

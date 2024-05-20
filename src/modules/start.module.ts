@@ -1,4 +1,4 @@
-// ./example.module.ts
+// start.module.ts
 import ModuleBuilder, { Module } from '../types/module.class';
 
 export default new ModuleBuilder('start', (module: Module) => {

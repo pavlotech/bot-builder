@@ -1,3 +1,4 @@
+// logger.class.ts
 import { LoggerOptions } from './interfaces/logger.interface';
 import fs from 'fs';
 import path from 'path';

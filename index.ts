@@ -1,4 +1,5 @@
-import { myCommands } from './config';
+import { commands } from './commands.config';
+// index.ts
 import { IBotContext } from './src/context/context.interface';
 import fs from "fs";
 import path from "path";
@@ -48,7 +49,7 @@ export default class App {
     this.bot.use(session());
     const stage = new Scenes.Stage<IBotContext>(scenes, { ttl: 10 * 60 * 1000 });
     this.bot.use(stage.middleware());
-    this.bot.telegram.setMyCommands(myCommands)
+    this.bot.telegram.setMyCommands(commands)
 
     const moduleBuilders = await this.importModules(path.join(__dirname, 'src', 'modules'));
     for (const moduleBuilder of moduleBuilders) {

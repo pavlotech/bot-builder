@@ -1,3 +1,4 @@
+// module.class.ts
 import App from "../../index";
 import Logger from "./logger.class";
 import { ModuleEvent } from "./events.class";

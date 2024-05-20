@@ -1,4 +1,4 @@
-// ./error.module.ts
+// error.module.ts
 import ModuleBuilder, { Module } from '../types/module.class';
 
 export default new ModuleBuilder('error', (module: Module) => {
