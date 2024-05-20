@@ -1,5 +1,5 @@
-import { commands } from './commands.config';
 // index.ts
+import { commands } from './commands.config';
 import { IBotContext } from './src/context/context.interface';
 import fs from "fs";
 import path from "path";
