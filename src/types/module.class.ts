@@ -1,5 +1,4 @@
 // module.class.ts
-import App from "../../index";
 import Logger from "./logger.class";
 import { ModuleEvent } from "./events.class";
 import { IBotContext } from "../context/context.interface";
@@ -7,6 +6,7 @@ import { Scenes, Telegraf } from "telegraf";
 import { IConfigService } from "../config/config.interface";
 import { ModuleOptions } from "./interfaces/module.interface";
 import { Locale } from "../locale/locale.service";
+import App from "../app";
 
 export default class ModuleBuilder {
   constructor(
