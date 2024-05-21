@@ -1,3 +1,5 @@
+import { Telegraf } from "telegraf";
+
 // tgconfig.ts
 export default {
   commands: [
@@ -9,5 +11,8 @@ export default {
       command: 'translate',
       description: 'Translate text into a different language',
     }
-  ]
+  ],
+  stage: {
+    ttl: 10 * 60 * 1000
+  }
 }

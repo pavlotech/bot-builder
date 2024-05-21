@@ -28,43 +28,41 @@ export default class App {
   }
   private async main() {
     const sceneModuleBuilders = await this.importModules(path.join(__dirname, 'modules', 'scenes'));
-    const scenes: Scenes.BaseScene<IBotContext>[] = [];
-
-    for (const moduleBuilder of sceneModuleBuilders) {
-      const scene = new Scenes.BaseScene<IBotContext>(moduleBuilder.name);
-      const module = new Module({
-        app: this,
-        config: this.config,
-        bot: this.bot,
-        logger: this.logger,
-        scene: scene
-      });
-      moduleBuilder.build(module);
-      if (module.scene) {
-        scenes.push(module.scene);
-      }
-    }
-
-    this.bot.use(session());
-    const stage = new Scenes.Stage<IBotContext>(scenes, { ttl: 10 * 60 * 1000 });
-    this.bot.use(stage.middleware());
-    this.bot.telegram.setMyCommands(tgconfig.commands)
-
     const moduleBuilders = await this.importModules(path.join(__dirname, 'modules'));
-    for (const moduleBuilder of moduleBuilders) {
-      const module = new Module({
-        app: this,
-        config: this.config,
-        bot: this.bot,
-        logger: this.logger,
-      });
-      moduleBuilder.build(module);
-    }
 
-    const launchOptions: Telegraf.LaunchOptions = {};
-    this.bot.launch(launchOptions, async () => {
-      this.logger.info('bot started successfully');
-    }).catch((error) => this.logger.error(error))
+    const scenes = await this.buildScenes(sceneModuleBuilders);
+    const stage = new Scenes.Stage<IBotContext>(scenes, tgconfig.stage);
+    
+    this.bot.use(session());
+    this.bot.use(stage.middleware());
+    this.bot.telegram.setMyCommands(tgconfig.commands);
+    
+    await this.buildModules(moduleBuilders);
+
+    const launchOptions: Telegraf.LaunchOptions = {
+      // launch options
+    };
+    this.bot.launch(launchOptions, () => this.logger.info('bot started successfully'))
+      .catch(error => this.logger.error(error));
+  }
+  private async buildScenes(sceneModuleBuilders: ModuleBuilder[]) {
+    return Promise.all(sceneModuleBuilders.map(async builder => {
+      const scene = new Scenes.BaseScene<IBotContext>(builder.name);
+      await builder.build(this.createModule(scene));
+      return scene;
+    }));
+  }
+  private async buildModules(moduleBuilders: ModuleBuilder[]) {
+    return Promise.all(moduleBuilders.map(builder => builder.build(this.createModule())));
+  }
+  private createModule(scene?: Scenes.BaseScene<IBotContext>) {
+    return new Module({
+      app: this,
+      config: this.config,
+      bot: this.bot,
+      logger: this.logger,
+      scene
+    });
   }
   private async importModules(dir: string): Promise<ModuleBuilder[]> {
     const files = (await fs.promises.readdir(dir)).filter(file => file.endsWith('.js') || file.endsWith('.ts'));

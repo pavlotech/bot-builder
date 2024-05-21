@@ -9,7 +9,7 @@ export default class Logger {
   private currentLogFileName: string = "";
   private nextSaveTime: number = 0;
 
-  constructor(private options: LoggerOptions) {
+  constructor(private readonly options: LoggerOptions) {
     this.options.logDirectory = path.resolve(this.options.logDirectory);
     fs.mkdirSync(this.options.logDirectory, { recursive: true });
     this.calculateNextSaveTime();

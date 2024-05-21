@@ -23,9 +23,7 @@ export class Module {
   public readonly locale: Locale
   public readonly scene?: Scenes.BaseScene<IBotContext>
 
-  constructor(
-    private options: ModuleOptions
-  ) {
+  constructor(private readonly options: ModuleOptions) {
     this.config = this.options.config;
     this.logger = this.options.logger;
     this.app = this.options.app;
