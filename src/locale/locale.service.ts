@@ -26,7 +26,6 @@ export class Locale {
   private async loadLocale(lang: string) {
     const supportedLanguages = (await fs.promises.readdir(this.localeDir))
       .map(file => file.split('.')[0]);
-
     lang = supportedLanguages.includes(lang) ? lang : 'en';
 
     const modulePath = path.join(this.localeDir, (await fs.promises.readdir(this.localeDir)).find(file => file.startsWith(lang))!);
