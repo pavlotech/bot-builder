@@ -1,5 +1,5 @@
 // app.ts
-import tgconfig from './../tgconfig';
+import config from '../config';
 import { IBotContext } from './context/context.interface';
 import fs from "fs";
 import path from "path";
@@ -27,23 +27,25 @@ export default class App {
     this.main();
   }
   private async main() {
-    const sceneModuleBuilders = await this.importModules(path.join(__dirname, 'modules', 'scenes'));
-    const moduleBuilders = await this.importModules(path.join(__dirname, 'modules'));
+    const [sceneModuleBuilders, moduleBuilders] = await Promise.all([
+      this.importModules('scene'),
+      this.importModules('module')
+    ]);
 
     const scenes = await this.buildScenes(sceneModuleBuilders);
-    const stage = new Scenes.Stage<IBotContext>(scenes, tgconfig.stage);
-    
+    const stage = new Scenes.Stage<IBotContext>(scenes, config.stage);
+
     this.bot.use(session());
     this.bot.use(stage.middleware());
-    this.bot.telegram.setMyCommands(tgconfig.commands);
-    
-    await this.buildModules(moduleBuilders);
+    this.bot.telegram.setMyCommands(config.commands);
 
     const launchOptions: Telegraf.LaunchOptions = {
       // launch options
     };
-    this.bot.launch(launchOptions, () => this.logger.info('bot started successfully'))
-      .catch(error => this.logger.error(error));
+    await Promise.all([
+      this.buildModules(moduleBuilders),
+      this.bot.launch(launchOptions, () => this.logger.info(`${this.bot.botInfo?.username} started successfully`)),
+    ]);
   }
   private async buildScenes(sceneModuleBuilders: ModuleBuilder[]) {
     return Promise.all(sceneModuleBuilders.map(async builder => {
@@ -64,16 +66,33 @@ export default class App {
       scene
     });
   }
-  private async importModules(dir: string): Promise<ModuleBuilder[]> {
-    const files = (await fs.promises.readdir(dir)).filter(file => file.endsWith('.js') || file.endsWith('.ts'));
+  private async importModules(keyword: string): Promise<ModuleBuilder[]> {
     const modules: ModuleBuilder[] = [];
+    const searchPattern = new RegExp(`.*${keyword}.*\\.(js|ts)$`);
+    const dirsToExplore: string[] = [path.join(__dirname, 'modules')];
 
-    for (const file of files) {
-      const modulePath = path.join(dir, file);
-      const { default: importedModule } = await import(modulePath);
-      if (importedModule instanceof ModuleBuilder) {
-        modules.push(importedModule);
-        this.logger.info(`module '${importedModule.name}' loaded from ${file}`);
+    for (const currentDir of dirsToExplore) {
+      try {
+        const entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
+        const importPromises = entries.map(async (entry) => {
+          const fullPath = path.join(currentDir, entry.name);
+          if (entry.isFile() && entry.name.match(searchPattern)) {
+            try {
+              const { default: importedModule } = await import(fullPath);
+              if (importedModule instanceof ModuleBuilder) {
+                modules.push(importedModule);
+                this.logger.info(`Module '${importedModule.name}' loaded from ${fullPath}`);
+              }
+            } catch (error) {
+              this.logger.error(`Error loading module from ${fullPath}:`, error);
+            }
+          } else if (entry.isDirectory()) {
+            dirsToExplore.push(fullPath);
+          }
+        });
+        await Promise.all(importPromises);
+      } catch (error) {
+        this.logger.error(`Error reading directory ${currentDir}:`, error);
       }
     }
     return modules;

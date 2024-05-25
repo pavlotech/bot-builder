@@ -1,6 +1,3 @@
-import { Telegraf } from "telegraf";
-
-// tgconfig.ts
 export default {
   commands: [
     {
